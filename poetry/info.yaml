@@ -1,0 +1,5 @@
+architecture: x86_64
+service_name: poetry
+type: console
+description: Poetry storage service with level of poet writers coolnes. Written in C.
+flag_id_description: Flags are identified by the user login.

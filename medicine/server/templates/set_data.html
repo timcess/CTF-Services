@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link href="/static/style.css" rel="stylesheet">
+		<title>Patient Card</title>
+        {% include "header.html" %}
+	</head>
+    {% if result == None %}
+	<body>	<h1 class="c0">Form for your personal records</h1>
+		
+		<form action="/data/set_data" method="post">
+          <div class="allDataZone">
+            <div class="dataZone">
+                <label class="v0">name:</label>
+                    <input type="text" name="name"></input>
+            </div>
+            <div class="dataZone">
+                <label class="v0">age:</label>
+                    <input type="text" name="age"></input>
+            </div>
+            <div class="dataZone">
+                <label class="v0">additional information:</label>
+                    <input type="text" name="addinfo"></input>
+            </div>
+          </div>
+          <div class="diagZone">
+			<label class="v0" style="margin-left: 400px" for="diagnosis">diagnosis:</label>
+			<br>
+				<textarea class="v02" id="diag-field" type="text" name="diagnosis" rows="20" cols="80"></textarea>
+			<br><br>
+				<input class="v1" type="submit" value="Submit!">
+          </div>
+		</form>
+    {% end %}
+    {% if result != None %}
+        <h1 class="c01">Your personal records updated!</h1>
+    {% end %}
+	</body>
+    {% include "footer.html" %}
+</html>
+
+
+
+

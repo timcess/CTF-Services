@@ -1,0 +1,152 @@
+body {
+	background-color: #EDE216;
+	background-image: url(im1.jpg);
+	background-repeat: no-repeat;
+	background-position: 50% 0;
+ }
+
+.c0 {
+	color: #00CC66;
+	margin-left: 400px;
+        font-size: 30px;
+}
+
+.c01 {
+	color: #00CC66;
+	font-size: 30px;
+    text-align: center;
+}
+
+.c1 {
+	color: #00CC66;
+	margin-left: 480px;
+	margin-top: 50px;
+	font-size: 30px;
+}
+
+.v0 {
+	color: #00FFCC;
+    float: left;
+}
+
+
+.v01{
+	margin-left: 100px;
+}
+
+
+.v02{
+	margin-left: 400px;
+}
+
+.v1{
+	margin-left: 950px;
+	margin-top: 50px;
+	color: green;
+	font-size:30px;
+}
+
+#dropZone {    
+    color: #5C9DC0;
+    font-size: 18px;
+    text-align: center;    
+
+    width: 400px;
+    padding: 50px 0;
+    margin: 50px auto;
+
+    background: #eee;
+    border: 1px solid #ccc;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+#dropZone.hover {
+    background: #ddd;
+    border-color: #aaa;
+}
+
+#dropZone.error {
+    background: #EE5921;
+    border-color: #f00;
+}
+
+#dropZone.dragging {
+    background: #06171E;
+    border-color: #BEBEBE;
+}
+
+#dropZone.drop {
+    background: #eee;
+    border-color: #BEBEBE;
+}
+
+.footer {
+    padding-top: 50%;
+}
+
+.dataZone {
+    clear: both;
+    text-align: right;
+    line-height: 25px;
+    margin-left: 400px;
+}
+
+label {
+    float: left;
+    padding-right: 10px;
+}
+.allDataZone {
+    float: left;
+}
+
+.diagZone {
+    margin-top: 5px;
+    float: left;
+}
+
+.userInfo {
+	color: #00CC66;
+}
+
+.header {
+    text-align:center;
+    color: #00CC66;
+}
+
+.navigation {
+    color: #00CC66;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    border-bottom-style: dashed;
+    border-bottom-width: thin;
+    border-bottom-color: #00CC66;
+}
+
+a {
+    color: #00CC66;
+}
+
+p {
+    color: #00CC66;
+}
+
+.getData {
+    width: 100%;
+    margin-top: 10px;
+    text-align: center;
+    border-style: dotted;
+    border-width: thin;
+    border-radius: 10px;
+    border-color: #00CC66;
+    padding: 10px;
+}
+
+.progBar {
+    width: 0px;
+    color: #00CC66;
+    border-style: solid;
+}

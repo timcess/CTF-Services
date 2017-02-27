@@ -1,0 +1,5 @@
+#!/bin/bash
+
+touch database
+rm -rf database
+mkdir database

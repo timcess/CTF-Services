@@ -1,0 +1,40 @@
+body {
+    font: 12px Arial, sans-serif;
+}
+
+#dropZone {    
+    color: #5C9DC0;
+    font-size: 18px;
+    text-align: center;    
+
+    width: 400px;
+    padding: 50px 0;
+    margin: 50px auto;
+
+    background: #eee;
+    border: 1px solid #ccc;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+#dropZone.hover {
+    background: #ddd;
+    border-color: #aaa;
+}
+
+#dropZone.error {
+    background: #EE5921;
+    border-color: #f00;
+}
+
+#dropZone.dragging {
+    background: #96C950;
+    border-color: #BEBEBE;
+}
+
+#dropZone.drop {
+    background: #96C950;
+    border-color: #BEBEBE;
+}

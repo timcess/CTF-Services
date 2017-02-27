@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+</head>
+<body>
+<script>
+
+
+$(document).ready(function() {
+    var dropZone = $('#dropZone'),
+    maxFileSize = 100000;
+
+    if (typeof(window.FileReader) == 'undefined') {
+            dropZone.text('No  =(');
+            dropZone.addClass('error');
+    };
+
+    dropZone[0].ondragover = function(event) {
+        event.preventDefault();
+        dropZone.addClass('dragging');
+    }
+
+    dropZone[0].ondragleave = function(event) {
+        event.preventDefault();
+        dropZone.removeClass('dragging');
+    }
+
+    dropZone[0].ondrop = function(event) {
+        event.preventDefault();
+        dropZone.removeClass('hover');
+        dropZone.addClass('drop');
+        var file = event.dataTransfer.files[0];
+        if (file.type.match(/image\/(.*)/) == null) {
+            var div = document.getElementById("dropZone");
+            div.innerHTML = "Wrong data type: PNG only";
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/register', true);
+        xhr.onload = function() {
+            var div = document.getElementById("dropZone");
+            div.innerHTML = this.response;
+        };
+        xhr.send(file);
+
+
+        if (file.size > maxFileSize) {
+            dropZone.removeClass('drop');
+            dropZone.text('FILE TOO LARGE');
+            dropZone.addClass('error');
+            return false;
+        }
+
+    };
+});
+
+</script>
+{% include "header.html" %}
+    <form action="#">
+        <div id="dropZone">
+            DROP YOUR PHOTO
+        </div>
+    </form>
+{% include "footer.html" %}
+</body>
+</html>

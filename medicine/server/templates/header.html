@@ -1,0 +1,11 @@
+<h1 class="header">The hacker medical Corp.</h1>
+<div class="navigation">
+    {% if current_user %}
+        <a href='/auth/logout'>Logout</a>
+        <a href='/data/set_data'>Set Data</a>
+        <a href='/data/get_data'>Get Data</a>
+    {% else %}
+        <a href='/auth/login'>Login</a>
+        <a href='/register'>Register</a>
+    {% end %}
+</div>

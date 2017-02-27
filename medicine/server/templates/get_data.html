@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+</head>
+<body>
+{% include "header.html" %}
+{% if patient_info != None %}
+    <div class="getData">
+        {% for key in patient_info.keys() %}
+        <p class="userInfo">{{ key }} : {{ patient_info[key] }}</p>
+        {% end %}
+    </div>
+{% end %}
+<div class="getData">
+<p>Also, you can download Your personal X-ray!!11!</p>
+<form method="get" action="/data/get_qrxray">
+    <input type="submit" value="GENERATE X-RAY!"></input>
+</form>
+{% if xray != None %}
+<div id="xrayZone">
+    <img src="data:image/png;base64,{{ xray }}"/>
+</div>
+{% end %}
+</div>
+{% include "footer.html" %}
+</body>
+</html>

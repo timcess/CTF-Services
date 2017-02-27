@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+</head>
+<body>
+{% include "header.html" %}
+<div class="getData">
+    <form action="/auth/login" method='post'>
+        <input type='text' name='secret_key' value='Your secret key' />
+        <input type='submit' />
+    </form>
+    {% if result %}
+    <p>{{ result }}</p>
+    {% end %}
+</div>
+{% include "footer.html" %}
+</body>
+</html>
