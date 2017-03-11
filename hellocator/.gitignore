@@ -1,0 +1,6 @@
+*.o
+*.a
+*.db
+*.swo
+*.swp
+usersSpaces/*

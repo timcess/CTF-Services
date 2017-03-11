@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic Page Needs
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta charset="utf-8">
+    <title>Math Messenger</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Mobile Specific Metas
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="{{ static_url("css/normalize.css") }}">
+    <link rel="stylesheet" href="{{ static_url("css/skeleton.css") }}">
+    <link rel="stylesheet" href="{{ static_url("css/mathmessage.css") }}">
+
+    <!-- Favicon
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="icon" type="image/png" href="images/favicon.png" />
+</head>
+<body> 
+
+  <!-- Header
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <img src="{{ static_url("images/gfp.jpg") }}" width="100px" height="100px">
+    <div class="section">
+                <h2>Math Messenger</h2>
+    </div>
+    <div class="container" style="padding-top: 2rem">
+        <div class="row">
+                <div class="nine columns">
+                    <a class="button" href="/">Home</a>
+                    <a class="button" href="/allmessages">Message List</a>
+                    <a class="button" href="/userlist">User List</a>
+                    <a class="button" href="/whysecure">Why So Secure?</a>
+                    <a class="button" href="/logout">Logout</a>
+                </div>
+                <div class="three columns" style="text-align: right">
+                    <h5>Hello, {{ user }}</h5>
+                </div>
+        </div>
+    </div>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+    <h4>Why our service is so secure?</h4>
+    <div>
+        <p>Because of
+        <a href="https://en.wikipedia.org/wiki/Blom%27s_scheme">Blom scheme,</a>
+        baby
+        </p>
+    </div>
+    <div>
+        <p>
+        <img src="{{ static_url("images/math.jpg") }}">
+        </p>
+    </div>
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+<html>

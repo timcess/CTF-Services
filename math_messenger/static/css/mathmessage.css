@@ -1,0 +1,31 @@
+.section {
+    position: absolute;
+    top:0px;
+    left:0px;
+    right:0px;
+    width: 80%;
+    max-width: 1024px;
+    margin: 2rem auto 0;
+    border-bottom: 1px solid #bbb;
+}
+
+.cntr {
+    padding-top: 100px;
+}
+
+.msg_class {
+    max-width: 461px;
+    word-wrap: break-word;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #bbb;
+}
+
+.msg_block {
+    position:absolute;
+    right: 0px;
+}
+
+.list_msg {
+    margin-left: 0;
+    word-wrap: break-word;
+}

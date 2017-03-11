@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic Page Needs
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta charset="utf-8">
+    <title>Math Messenger</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Mobile Specific Metas
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="{{ static_url("css/normalize.css") }}">
+    <link rel="stylesheet" href="{{ static_url("css/skeleton.css") }}">
+    <link rel="stylesheet" href="{{ static_url("css/mathmessage.css") }}">
+
+    <!-- Favicon
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="icon" type="image/png" href="images/favicon.png" />
+</head>
+<body> 
+    <div class="section">
+        <h2>Math Messenger</h2>
+    </div>
+    <div class="container">
+        <div class="row">
+                <a class="button" href="/">Home</a>
+                <a class="button" href="/allmessages">All Messages</a>
+                <a class="button" href="/userlist">User List</a>
+                <a class="button" href="/whysecure">Why So Secure?</a>
+                <a class="button" href="/logout">Logout</a>
+        </div>
+    </div>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <div class="container">
+      <h4>Here is all users registered in our service</h4>
+      {% for msg in all_msgs %}
+      <div class="row">
+        <div class="eleven columns">
+                <p>{{ str(msg) }}</p>
+        </div>
+      </div>
+      {% end %}
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+<html>
