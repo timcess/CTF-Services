@@ -13,6 +13,8 @@
 #include <sqlite3.h>
 #include <unistd.h>
 #include <signal.h>
+#include <dirent.h>
+
 #include "hellocator.h"
 #include "help.h"
 
@@ -26,7 +28,6 @@ class ClientHandler {
         uint64_t _occupied_space;
         char _last_download_file[20];
         std::string _login;
-        int _priv_mode;
         void enter_logpass(std::string &login, std::string &pass);
     public:
         ClientHandler(int client);
@@ -40,11 +41,12 @@ class ClientHandler {
         void register_client();
         void login();
     	void allocate();
-	    void upload();
+	void upload();
         void download();
         void list_files();
+        void list_users();
         bool check_credentials(std::string &login, std::string &pass, std::string &result);
-        std::string get_responce();
+        std::string get_response();
 };
 
 void
@@ -59,7 +61,6 @@ ClientHandler:: ClientHandler(int client) {
 	_occupied_space = 0;
     _auth = 0;
     _sfd = client;
-    _priv_mode = 0;
     int dbdescr = sqlite3_open("db.db", &_db);
 }
 
@@ -122,36 +123,9 @@ ClientHandler:: download() {
 		return;
     }
     send_msg("What file do you want download?\n");
-    resp = get_responce();
-    if (_priv_mode) {
-        char username[LOGIN_MAX_LEN];
-        memset(username, 0, LOGIN_MAX_LEN);
-        int index = resp.find("/");
-        if (index != std::string::npos) {
-            resp.copy(username, index, 0);
-            std::string usrname(username);
-            login = usrname;
-        } else {
-            login = _login;
-        }
-        std::string client_db_path = "usersSpaces/"+login;
-        dbres = sqlite3_open(client_db_path.c_str(), &ddb);
-        if (dbres) {
-            std::string errmsg("Can't open file: ");
-            errmsg = errmsg + client_db_path + "\n";
-            send_msg(errmsg);
-            std::cout << dbres << std::endl;
-            return;
-        }
-        char filename[LOGIN_MAX_LEN];
-        memset(filename, 0, LOGIN_MAX_LEN);
-        resp.copy(filename, resp.size()-index-1, index+1);
-        std::string fle(filename);
-        file = fle;
-    } else {
-        ddb = _client_db;
-        file = resp;
-    }
+    resp = get_response();
+    ddb = _client_db;
+    file = resp;
 
     sql = "SELECT * FROM '"+file+"';";
     dbres = sqlite3_exec(ddb, sql.c_str(), 0, 0, &err);
@@ -184,7 +158,7 @@ ClientHandler:: allocate() {
 	}
 
 	send_msg("Mkay, how much do you want to allocate?\n");
-	uint32_t size_wanted = atoi(get_responce().c_str());
+	uint32_t size_wanted = atoi(get_response().c_str());
 	if (size_wanted + _free_space + _occupied_space > MAX_FREE_SPACE)
 	{
 		send_msg("You ask too much, sir.\n");
@@ -217,7 +191,7 @@ ClientHandler:: upload() {
 	}
 
     send_msg("Send us file's contents.\n");
-    std::string file_content = get_responce();
+    std::string file_content = get_response();
     uint32_t file_content_length = file_content.length();
     if (file_content_length > _free_space)
     {
@@ -226,7 +200,7 @@ ClientHandler:: upload() {
     }
 
     send_msg("Which file do you want this to write in?\n");
-    std::string file_name = get_responce();
+    std::string file_name = get_response();
     if (file_name[0] >= '0' and file_name[0] <= '9')
     {
         send_msg("Filename cant start with number\n");
@@ -322,8 +296,27 @@ ClientHandler:: list_files()
 
 }
 
+void
+ClientHandler::list_users() {
+    DIR *dfd;
+    struct dirent *dp;
+
+    dfd=opendir(USERS_DIR);
+ 
+    while( (dp=readdir(dfd)) != NULL )
+    {
+        if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, ".."))
+        {
+            send_msg(dp->d_name);
+            send_msg("\n");
+        }
+    }
+ 
+    closedir(dfd);
+}
+
 bool
-ClientHandler:: check_credentials(std::string &login, std::string &pass, std::string &result) {
+ClientHandler::check_credentials(std::string &login, std::string &pass, std::string &result) {
     size_t i;
     if (!login.empty() && (i = login.find("\n")) != std::string::npos)
             login.erase(i);
@@ -465,7 +458,7 @@ ClientHandler:: login() {
         return;
     }
 
-    std::string client_db_path = "usersSpaces/" + login;
+    std::string client_db_path = USERS_DIR + login;
     dbres = sqlite3_open(client_db_path.c_str(), &_client_db);
     if (dbres)
     {
@@ -501,7 +494,6 @@ ClientHandler:: login() {
     _occupied_space = db_info_items[1];
     _auth = 1;
     _login = login;
-    if (login == "admin") _priv_mode = 1;
     send_msg ("Hello, " + login + "!\n");
 }
 
@@ -528,7 +520,7 @@ ClientHandler::send_msg(std::string msg) {
 }
 
 std::string
-ClientHandler::get_responce() {
+ClientHandler::get_response() {
     char buf[BUFFER_SIZE];
     size_t i;
     if (recv(_sfd, buf, sizeof(buf), 0) <= 0)
@@ -545,37 +537,40 @@ void*
 handler(void *clfd) {
     int sfd = *(int *)clfd;
     ClientHandler client(sfd);
-    std::string responce;
+    std::string response;
 
     client.send_welcome();
     client.send_msg("Hello in Hellocator Center!\n");
     client.send_msg("Say, what do you want? May be you need HELP?\n");
     client.send_input_line();
-    while ((responce = client.get_responce()) != "EXIT") {
-        if (responce == "HELP") {
+    while ((response = client.get_response()) != "EXIT") {
+        if (response == "HELP") {
             client.help();
         }
-        else if (responce == "REGISTER") {
+        else if (response == "REGISTER") {
             client.register_client();
         }
-        else if (responce == "LOGIN") {
+        else if (response == "LOGIN") {
             client.login();
         }
-        else if (responce == "ALLOCATE") {
+        else if (response == "ALLOCATE") {
 			client.allocate();
         }
-		else if (responce == "UPLOAD") {
-			client.upload();
-		}
-        else if (responce == "LIST FILES") {
+        else if (response == "UPLOAD") {
+                client.upload();
+        }
+        else if (response == "LIST FILES") {
             client.list_files();
         }
-        else if (responce == "DOWNLOAD") {
+        else if (response == "DOWNLOAD") {
             client.download();
         }
-		else if (responce == "SPACE INFO") {
-			client.space_info();
-		}
+        else if (response == "SPACE INFO") {
+                client.space_info();
+        }
+        else if (response == "LIST USERS") {
+            client.list_users();
+        }
         client.send_input_line();
     }
 

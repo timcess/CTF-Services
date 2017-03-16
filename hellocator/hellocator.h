@@ -1,4 +1,5 @@
 #define WELCOME_FILE "welcome.art"
+#define USERS_DIR "usersSpaces/"
 #define WELCOME_LEN 600
 #define LOGIN_MAX_LEN 100
 #define PASSWORD_MAX_LEN 10
