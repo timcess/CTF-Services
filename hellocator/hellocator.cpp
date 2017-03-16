@@ -14,9 +14,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <dirent.h>
+#include <map>
 
 #include "hellocator.h"
 #include "help.h"
+
+
+class Command;
 
 class ClientHandler {
     private:
@@ -29,14 +33,19 @@ class ClientHandler {
         char _last_download_file[20];
         std::string _login;
         void enter_logpass(std::string &login, std::string &pass);
+        std::map <std::string, Command *> _commands;
+        Command *_wrong_cmd;
     public:
         ClientHandler(int client);
         ~ClientHandler();
+        /* Communication */
+        void send_msg(const char *msg);
+        void send_msg(std::string msg);
+        std::string recv_msg();
+        /* Commands */
         void space_info();
         void send_input_line();
         void send_welcome();
-        void send_msg(const char *msg);
-        void send_msg(std::string msg);
         void help();
         void register_client();
         void login();
@@ -45,15 +54,76 @@ class ClientHandler {
         void download();
         void list_files();
         void list_users();
+        /* Others */
+        Command *get_cmd(std::string);
         bool check_credentials(std::string &login, std::string &pass, std::string &result);
-        std::string get_response();
 };
+
+class Command {
+    public:
+        virtual int exec(ClientHandler &) = 0;
+};
+
+class Exit: public Command {
+    public:
+        int exec(ClientHandler &ch) { return 0; };
+};
+
+class Help: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.help(); return 1; };
+};
+
+class Login: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.login(); return 1; };
+};
+
+class Register: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.register_client(); return 1; };
+};
+
+class Allocate: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.allocate(); return 1; };
+};
+
+class Upload: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.upload(); return 1; };
+};
+
+class Download: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.download(); return 1; };
+};
+
+class ListFiles: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.list_files(); return 1; };
+};
+
+class SpaceInfo: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.list_files(); return 1; };
+};
+
+class ListUsers: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.list_users(); return 1; };
+};
+
+class Wrong: public Command {
+    public:
+        int exec(ClientHandler &ch) { ch.send_msg("Wrong command\n"); return 1; };
+};
+
 
 void
 inline
 ClientHandler:: send_input_line() {
-    std::string input = "->";
-    send(_sfd, input.c_str(), input.length(), 0);
+    send_msg("->");
 }
 
 ClientHandler:: ClientHandler(int client) {
@@ -61,12 +131,32 @@ ClientHandler:: ClientHandler(int client) {
 	_occupied_space = 0;
     _auth = 0;
     _sfd = client;
+    _commands.insert({"HELP", new Help()});
+    _commands.insert({"EXIT", new Exit()});
+    _commands.insert({"REGISTER", new Register()});
+    _commands.insert({"LOGIN", new Login()});
+    _commands.insert({"LIST USERS", new ListUsers()});
+    _commands.insert({"ALLOCATE", new Allocate()});
+    _commands.insert({"UPLOAD", new Upload()});
+    _commands.insert({"DOWNLOAD", new Download()});
+    _commands.insert({"LIST FILES", new ListFiles()});
+    _commands.insert({"SPACE INFO", new SpaceInfo()});
+    _wrong_cmd = new Wrong();
     int dbdescr = sqlite3_open("db.db", &_db);
 }
 
 ClientHandler:: ~ClientHandler() {
     sqlite3_close(_db);
     sqlite3_close(_client_db);
+}
+
+Command *
+ClientHandler::get_cmd(std::string line) {
+    if (_commands.find(line) != _commands.end()) {
+        return _commands[line];
+    } else
+        return _wrong_cmd;
+
 }
 
 static int callback_select(void *is_exist, int argc, char **argv, char **azColName){
@@ -123,7 +213,7 @@ ClientHandler:: download() {
 		return;
     }
     send_msg("What file do you want download?\n");
-    resp = get_response();
+    resp = recv_msg();
     ddb = _client_db;
     file = resp;
 
@@ -158,7 +248,7 @@ ClientHandler:: allocate() {
 	}
 
 	send_msg("Mkay, how much do you want to allocate?\n");
-	uint32_t size_wanted = atoi(get_response().c_str());
+	uint32_t size_wanted = atoi(recv_msg().c_str());
 	if (size_wanted + _free_space + _occupied_space > MAX_FREE_SPACE)
 	{
 		send_msg("You ask too much, sir.\n");
@@ -191,7 +281,7 @@ ClientHandler:: upload() {
 	}
 
     send_msg("Send us file's contents.\n");
-    std::string file_content = get_response();
+    std::string file_content = recv_msg();
     uint32_t file_content_length = file_content.length();
     if (file_content_length > _free_space)
     {
@@ -200,7 +290,7 @@ ClientHandler:: upload() {
     }
 
     send_msg("Which file do you want this to write in?\n");
-    std::string file_name = get_response();
+    std::string file_name = recv_msg();
     if (file_name[0] >= '0' and file_name[0] <= '9')
     {
         send_msg("Filename cant start with number\n");
@@ -339,18 +429,6 @@ ClientHandler::check_credentials(std::string &login, std::string &pass, std::str
 
 void
 ClientHandler:: help() {
-    std::vector<std::string>commands;
-    commands.push_back("EXIT\n");
-    commands.push_back("REGISTER\n");
-    commands.push_back("LOGIN\n");
-    commands.push_back("ALLOCATE\n");
-    commands.push_back("UPLOAD\n");
-    commands.push_back("DOWNLOAD\n");
-    commands.push_back("LIST FILES\n");
-    commands.push_back("SPACE INFO\n");
-    for (int i = 0; i < commands.size(); i++) {
-        send(_sfd, commands[i].c_str(), commands[i].length(), 0);
-    }
 }
 
 void ClientHandler:: space_info() {
@@ -368,8 +446,6 @@ void ClientHandler:: space_info() {
 
 void
 ClientHandler::enter_logpass(std::string &log, std::string &pass) {
-    std::string log_str = "Login: ";
-    std::string pass_str = "Password: ";
     std::string res;
     char log_buff[LOGIN_MAX_LEN];
     char pass_buff[PASSWORD_MAX_LEN];
@@ -378,12 +454,12 @@ ClientHandler::enter_logpass(std::string &log, std::string &pass) {
 
     memset(log_buff, 0, LOGIN_MAX_LEN);
     memset(pass_buff, 0, PASSWORD_MAX_LEN);
-    send(_sfd, log_str.c_str(), log_str.length(), 0);
+    send_msg("Login: ");
     recv(_sfd, log_buff, sizeof(log_buff), 0);
     std::string login(log_buff);
     log = login;
 
-    send(_sfd, pass_str.c_str(), pass_str.length(), 0);
+    send_msg("Password: ");
     recv(_sfd, pass_buff, sizeof(pass_buff), 0);
     std::string password(pass_buff);
     pass = password;
@@ -431,8 +507,7 @@ ClientHandler:: register_client() {
             }
         }
     }
-    res = res+"\n";
-    send(_sfd, res.c_str(), res.length(), 0);
+    send_msg(res+"\n");
 }
 
 void
@@ -520,7 +595,7 @@ ClientHandler::send_msg(std::string msg) {
 }
 
 std::string
-ClientHandler::get_response() {
+ClientHandler::recv_msg() {
     char buf[BUFFER_SIZE];
     size_t i;
     if (recv(_sfd, buf, sizeof(buf), 0) <= 0)
@@ -538,41 +613,18 @@ handler(void *clfd) {
     int sfd = *(int *)clfd;
     ClientHandler client(sfd);
     std::string response;
+    Command *cmd;
 
     client.send_welcome();
     client.send_msg("Hello in Hellocator Center!\n");
     client.send_msg("Say, what do you want? May be you need HELP?\n");
-    client.send_input_line();
-    while ((response = client.get_response()) != "EXIT") {
-        if (response == "HELP") {
-            client.help();
-        }
-        else if (response == "REGISTER") {
-            client.register_client();
-        }
-        else if (response == "LOGIN") {
-            client.login();
-        }
-        else if (response == "ALLOCATE") {
-			client.allocate();
-        }
-        else if (response == "UPLOAD") {
-                client.upload();
-        }
-        else if (response == "LIST FILES") {
-            client.list_files();
-        }
-        else if (response == "DOWNLOAD") {
-            client.download();
-        }
-        else if (response == "SPACE INFO") {
-                client.space_info();
-        }
-        else if (response == "LIST USERS") {
-            client.list_users();
-        }
+
+    do {
         client.send_input_line();
-    }
+        response = client.recv_msg();
+        cmd = client.get_cmd(response);
+    } while (cmd->exec(client));
+
 
     client.send_msg("Goodbye!\n");
     close(sfd);
