@@ -278,7 +278,12 @@ if __name__ == '__main__':
             print("python {} GET <host> <flag id> <expected flag>")
             sys.exit(EXITCODE_INVARG)
         else:
-            exit(c.get(sys.argv[3], sys.argv[4]))
+            flagid = sys.argv[3]
+            flag = sys.argv[4]
+            m = md5.new()
+            m.update(flagid)
+            newflagid = 'a'+m.hexdigest()
+            exit(c.get(newflagid, flag))
     if command == 'PUT':
         if (len(sys.argv) < 5):
             print("python {} PUT <host> <flag id> <flag>")
