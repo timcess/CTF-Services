@@ -284,6 +284,11 @@ if __name__ == '__main__':
             print("python {} PUT <host> <flag id> <flag>")
             sys.exit(EXITCODE_INVARG)
         else:
-            exit(c.put("a"+sys.argv[3][1:], sys.argv[4]))
+            flagid = sys.argv[3]
+            flag = sys.argv[4]
+            m = md5.new()
+            m.update(flagid)
+            newflagid = 'a'+m.hexdigest()
+            exit(c.put(newflagid, flag))
     if command == 'CHECK':
         exit(c.test())
