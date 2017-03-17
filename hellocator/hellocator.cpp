@@ -23,100 +23,133 @@
 class Command;
 
 class ClientHandler {
-    private:
-        sqlite3 *_db;
-        sqlite3 *_client_db;
-        int _sfd;
-        int _auth;
-        uint64_t _free_space;
-        uint64_t _occupied_space;
-        char _last_download_file[20];
-        std::string _login;
-        void enter_logpass(std::string &login, std::string &pass);
-        std::map <std::string, Command *> _commands;
-        Command *_wrong_cmd;
-    public:
-        ClientHandler(int client);
-        ~ClientHandler();
-        /* Communication */
-        void send_msg(const char *msg);
-        void send_msg(std::string msg);
-        std::string recv_msg();
-        /* Commands */
-        void space_info();
-        void send_input_line();
-        void send_welcome();
-        void help();
-        void register_client();
-        void login();
-    	void allocate();
-	void upload();
-        void download();
-        void list_files();
-        void list_users();
-        /* Others */
-        Command *get_cmd(std::string);
-        bool check_credentials(std::string &login, std::string &pass, std::string &result);
+private:
+    sqlite3 *_db;
+    sqlite3 *_client_db;
+    int _sfd;
+    int _auth;
+    uint64_t _free_space;
+    uint64_t _occupied_space;
+    std::string _login;
+    void enter_logpass(std::string &login, std::string &pass);
+    std::map <std::string, Command *> _commands;
+    Command *_wrong_cmd;
+public:
+    ClientHandler(int client);
+    ~ClientHandler();
+    /* Communication */
+    void send_msg(const char *msg);
+    void send_msg(std::string msg);
+    std::string recvline();
+    std::string recvline_or_eof(int *);
+    /* Commands */
+    void space_info();
+    void send_input_line();
+    void send_welcome();
+    void help();
+    void register_client();
+    void login();
+    void allocate();
+    void upload();
+    void download();
+    void list_files();
+    void list_users();
+    /* Others */
+    Command *get_cmd(std::string &);
+    bool check_credentials(std::string &login, std::string &pass, std::string &result);
 };
 
 class Command {
-    public:
-        virtual int exec(ClientHandler &) = 0;
+public:
+    virtual int exec(ClientHandler &) = 0;
 };
 
 class Exit: public Command {
-    public:
-        int exec(ClientHandler &ch) { return 0; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.send_msg("Goodbye!");
+        return 0;
+    };
 };
 
 class Help: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.help(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.help();
+        return 1;
+    };
 };
 
 class Login: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.login(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.login();
+        return 1;
+    };
 };
 
 class Register: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.register_client(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.register_client();
+        return 1;
+    };
 };
 
 class Allocate: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.allocate(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.allocate();
+        return 1;
+    };
 };
 
 class Upload: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.upload(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.upload();
+        return 1;
+    };
 };
 
 class Download: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.download(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.download();
+        return 1;
+    };
 };
 
 class ListFiles: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.list_files(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.list_files();
+        return 1;
+    };
 };
 
 class SpaceInfo: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.list_files(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.list_files();
+        return 1;
+    };
 };
 
 class ListUsers: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.list_users(); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.list_users();
+        return 1;
+    };
 };
 
 class Wrong: public Command {
-    public:
-        int exec(ClientHandler &ch) { ch.send_msg("Wrong command\n"); return 1; };
+public:
+    int exec(ClientHandler &ch) {
+        ch.send_msg("Wrong command\n");
+        return 1;
+    };
 };
 
 
@@ -128,7 +161,7 @@ ClientHandler:: send_input_line() {
 
 ClientHandler:: ClientHandler(int client) {
     _free_space = 0;
-	_occupied_space = 0;
+    _occupied_space = 0;
     _auth = 0;
     _sfd = client;
     _commands.insert({"HELP", new Help()});
@@ -151,20 +184,21 @@ ClientHandler:: ~ClientHandler() {
 }
 
 Command *
-ClientHandler::get_cmd(std::string line) {
-    if (_commands.find(line) != _commands.end()) {
-        return _commands[line];
+ClientHandler::get_cmd(std::string &line) {
+    auto it = _commands.find(line);
+    if (it != _commands.end()) {
+        return it->second;
     } else
         return _wrong_cmd;
 
 }
 
-static int callback_select(void *is_exist, int argc, char **argv, char **azColName){
+static int callback_select(void *is_exist, int argc, char **argv, char **azColName) {
     if (argc > 1) *(bool *)is_exist = true;
     return 0;
 }
 
-static int callback_download(void *resvector, int argc, char **argv, char **azColName){
+static int callback_download(void *resvector, int argc, char **argv, char **azColName) {
     std::vector <std::string> *resv = reinterpret_cast<std::vector<std::string> *>(resvector);
     for (int i = 0; i < argc; i++) {
         resv->push_back(argv[i]);
@@ -172,7 +206,7 @@ static int callback_download(void *resvector, int argc, char **argv, char **azCo
     return 0;
 }
 
-static int callback_list(void *resvector, int argc, char **argv, char **azColName){
+static int callback_list(void *resvector, int argc, char **argv, char **azColName) {
     std::vector <std::string> *resv = reinterpret_cast<std::vector<std::string> *>(resvector);
     for (int i = 0; i < argc; i++) {
         resv->push_back(argv[i]);
@@ -180,7 +214,7 @@ static int callback_list(void *resvector, int argc, char **argv, char **azColNam
     return 0;
 }
 
-static int callback_login(void *resvector, int argc, char **argv, char **azColName){
+static int callback_login(void *resvector, int argc, char **argv, char **azColName) {
     std::vector <std::string> *resv = reinterpret_cast<std::vector<std::string> *>(resvector);
     if (argc > 1) {
         resv->push_back(argv[0]);
@@ -209,11 +243,11 @@ ClientHandler:: download() {
     int dbres;
     std::vector <std::string> list_of_chunks;
     if (_auth == false) {
-		send_msg("Log in firstly. No login - no flies\n");
-		return;
+        send_msg("Log in firstly. No login - no flies\n");
+        return;
     }
     send_msg("What file do you want download?\n");
-    resp = recv_msg();
+    resp = recvline();
     ddb = _client_db;
     file = resp;
 
@@ -235,27 +269,27 @@ ClientHandler:: download() {
     }
     for (int i = 0; i < list_of_chunks.size(); i++)
         send_msg(list_of_chunks[i]);
-    strcpy(_last_download_file, resp.c_str());
     send_msg("\n");
 }
 
 void
 ClientHandler:: allocate() {
-	if (_auth == false)
-	{
-		send_msg("Log in firstly. No allocation for you.\n");
-		return;
-	}
+    if (_auth == false)
+    {
+        send_msg("Log in firstly. No allocation for you.\n");
+        return;
+    }
 
-	send_msg("Mkay, how much do you want to allocate?\n");
-	uint32_t size_wanted = atoi(recv_msg().c_str());
-	if (size_wanted + _free_space + _occupied_space > MAX_FREE_SPACE)
-	{
-		send_msg("You ask too much, sir.\n");
-		return;
-	}
+    send_msg("Mkay, how much do you want to allocate?\n");
+    uint32_t size_wanted = atoi(recvline().c_str());
+    if (size_wanted + _free_space + _occupied_space > MAX_FREE_SPACE)
+    {
+        send_msg("You ask too much, sir.\n");
+        return;
+    }
 
-    char *err; int dbres;
+    char *err;
+    int dbres;
     std::string sql = "UPDATE spaceinfo " \
                       "SET FREESPACE=" + std::to_string(size_wanted + _free_space) + \
                       " WHERE FREESPACE=" + std::to_string(_free_space) + ";";
@@ -267,21 +301,21 @@ ClientHandler:: allocate() {
         send_msg("Allocation failed: technical problem.\n");
         return;
     }
-	_free_space += size_wanted;
-	send_msg("Here, take free memory!\n");
+    _free_space += size_wanted;
+    send_msg("Here, take free memory!\n");
 }
 
 
 void
 ClientHandler:: upload() {
-	if (_auth == false)
-	{
-		send_msg("Log in firstly. No uploading for you.\n");
-		return;
-	}
+    if (_auth == false)
+    {
+        send_msg("Log in firstly. No uploading for you.\n");
+        return;
+    }
 
     send_msg("Send us file's contents.\n");
-    std::string file_content = recv_msg();
+    std::string file_content = recvline();
     uint32_t file_content_length = file_content.length();
     if (file_content_length > _free_space)
     {
@@ -290,7 +324,7 @@ ClientHandler:: upload() {
     }
 
     send_msg("Which file do you want this to write in?\n");
-    std::string file_name = recv_msg();
+    std::string file_name = recvline();
     if (file_name[0] >= '0' and file_name[0] <= '9')
     {
         send_msg("Filename cant start with number\n");
@@ -304,11 +338,12 @@ ClientHandler:: upload() {
         }
 
 
-    char *err; int dbres;
+    char *err;
+    int dbres;
     std::string sql = "CREATE TABLE IF NOT EXISTS " + file_name + "("\
-                 "CHUNKID INTEGER PRIMARY KEY AUTOINCREMENT,"\
-                 "CHUNK CHAR(256),"\
-                 "SIZE INTEGER);";
+                      "CHUNKID INTEGER PRIMARY KEY AUTOINCREMENT,"\
+                      "CHUNK CHAR(256),"\
+                      "SIZE INTEGER);";
     dbres = sqlite3_exec(_client_db, sql.c_str(), 0, 0, &err);
     if (dbres != SQLITE_OK)
     {
@@ -392,7 +427,7 @@ ClientHandler::list_users() {
     struct dirent *dp;
 
     dfd=opendir(USERS_DIR);
- 
+
     while( (dp=readdir(dfd)) != NULL )
     {
         if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, ".."))
@@ -401,7 +436,7 @@ ClientHandler::list_users() {
             send_msg("\n");
         }
     }
- 
+
     closedir(dfd);
 }
 
@@ -409,15 +444,23 @@ bool
 ClientHandler::check_credentials(std::string &login, std::string &pass, std::string &result) {
     size_t i;
     if (!login.empty() && (i = login.find("\n")) != std::string::npos)
-            login.erase(i);
+        login.erase(i);
     if (!pass.empty() && (i = pass.find("\n")) != std::string::npos)
-            pass.erase(i);
+        pass.erase(i);
     if (login.length() < 1) {
         result = "You should enter login";
         return false;
     }
     if (pass.length() < 1) {
         result = "You should enter password";
+        return false;
+    }
+    if (pass.length() > PASSWORD_MAX_LEN) {
+        result = "Password is too long O_o";
+        return false;
+    }
+    if (login.length() > LOGIN_MAX_LEN) {
+        result = "Login is too long";
         return false;
     }
     if (!check_step_second(login.c_str(), pass.c_str())) {
@@ -429,14 +472,17 @@ ClientHandler::check_credentials(std::string &login, std::string &pass, std::str
 
 void
 ClientHandler:: help() {
+    for (auto &item: _commands) {
+        send_msg(item.first+"\n");
+    }
 }
 
 void ClientHandler:: space_info() {
-	if (_auth == false)
-	{
-		send_msg("Log in firstly. No login - No space.\n");
-		return;
-	}
+    if (_auth == false)
+    {
+        send_msg("Log in firstly. No login - No space.\n");
+        return;
+    }
     std::string str = "You have ";
     send_msg (str + std::to_string(MAX_FREE_SPACE - _free_space - _occupied_space) + " memory for allocation\n");
     send_msg (str + std::to_string(_free_space) + " memory to write files\n");
@@ -446,31 +492,19 @@ void ClientHandler:: space_info() {
 
 void
 ClientHandler::enter_logpass(std::string &log, std::string &pass) {
-    std::string res;
-    char log_buff[LOGIN_MAX_LEN];
-    char pass_buff[PASSWORD_MAX_LEN];
-    char *err;
-    int dbres;
-
-    memset(log_buff, 0, LOGIN_MAX_LEN);
-    memset(pass_buff, 0, PASSWORD_MAX_LEN);
     send_msg("Login: ");
-    recv(_sfd, log_buff, sizeof(log_buff), 0);
-    std::string login(log_buff);
-    log = login;
+    log = recvline();
 
     send_msg("Password: ");
-    recv(_sfd, pass_buff, sizeof(pass_buff), 0);
-    std::string password(pass_buff);
-    pass = password;
+    pass = recvline();
 }
 
 void
 ClientHandler:: register_client() {
     std::string login, pass, res;
     enter_logpass(login, pass);
-    
-    if (check_credentials(login, pass, res)) {    
+
+    if (check_credentials(login, pass, res)) {
         std::string sql = "SELECT * FROM user WHERE name='"+login+"';";
         char *err;
         int dbres;
@@ -492,8 +526,11 @@ ClientHandler:: register_client() {
                     res = "Registration failed: techical reason";
                 else
                 {
-                    std::string sum(hellhash(login.c_str(), pass.c_str()));
-                    std::string sql = "INSERT INTO user (name, password, sum) VALUES ('"+login+"',"+"'"+pass+"',"+"'"+sum+"');";
+                    char *sumstr = hellhash(login.c_str(), pass.c_str());
+
+                    std::string sum(sumstr);
+                    std::string sql = "INSERT INTO user (name, password, sum) \
+                                       VALUES ('"+login+"',"+"'"+pass+"',"+"'"+sum+"');";
                     dbres = sqlite3_exec(_db, sql.c_str(), 0, 0, &err);
                     if (dbres)
                     {
@@ -503,6 +540,8 @@ ClientHandler:: register_client() {
                     }
                     else
                         res = "Success registration";
+
+                    free(sumstr);
                 }
             }
         }
@@ -569,8 +608,10 @@ ClientHandler:: login() {
     _occupied_space = db_info_items[1];
     _auth = 1;
     _login = login;
-    send_msg ("Hello, " + login + "!\n");
+
+    send_msg("Hello, "+login);
 }
+
 
 void
 ClientHandler::send_welcome() {
@@ -583,7 +624,7 @@ ClientHandler::send_welcome() {
 }
 
 void
-inline 
+inline
 ClientHandler::send_msg(const char *msg) {
     send(_sfd, msg, strlen(msg), 0);
 }
@@ -595,22 +636,40 @@ ClientHandler::send_msg(std::string msg) {
 }
 
 std::string
-ClientHandler::recv_msg() {
-    char buf[BUFFER_SIZE];
-    size_t i;
-    if (recv(_sfd, buf, sizeof(buf), 0) <= 0)
-        return std::string("EXIT");
-    else {
-        std::string result(buf);
-        if (!result.empty() && (i = result.find("\n")) != std::string::npos)
-                result.erase(i);
-        return result;
+ClientHandler::recvline() {
+    std::string result = "";
+    char chr;
+    while (recv(_sfd, &chr, 1, 0) == 1) {
+        if (chr == '\n')
+            break;
+        else
+            result += chr;
     }
+    return result;
 }
+
+std::string
+ClientHandler::recvline_or_eof(int *eof) {
+    std::string result = "";
+    char chr;
+    *eof = 0;
+
+    while (recv(_sfd, &chr, 1, 0) == 1) {
+        if (chr == '\n') {
+            return result;
+        }
+        result += chr;
+    }
+
+    *eof = 1;
+    return result;
+}
+
 
 void*
 handler(void *clfd) {
     int sfd = *(int *)clfd;
+    int eof;
     ClientHandler client(sfd);
     std::string response;
     Command *cmd;
@@ -621,12 +680,15 @@ handler(void *clfd) {
 
     do {
         client.send_input_line();
-        response = client.recv_msg();
-        cmd = client.get_cmd(response);
+        response = client.recvline_or_eof(&eof);
+        if (eof) {
+            std::string exit("EXIT");
+            cmd = client.get_cmd(exit);
+        } else {
+            cmd = client.get_cmd(response);
+        }
     } while (cmd->exec(client));
 
-
-    client.send_msg("Goodbye!\n");
     close(sfd);
     pthread_exit((void *)0);
 }
